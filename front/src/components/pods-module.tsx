@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Slider } from "@components/ui/slider";
 import { Checkbox } from "@components/ui/checkbox";
 import { Label } from "@components/ui/label";
@@ -8,7 +8,14 @@ import { setReplicas, getReplicas, toggleAutoscale } from "@lib/api";
 
 export default function PodsModule() {
   const [autoScale, setAutoScale] = useState(false);
-  const { data: replicas, refetch } = useQuery({ queryKey: ["replicas"], queryFn: getReplicas });
+  const { data: replicas, refetch } = useQuery({
+    queryKey: ["replicas"],
+    queryFn: async () => {
+      const res = await getReplicas();
+      console.log("🛠 Nombre de réplicas reçu :", res); // ✅ DEBUG
+      return res;
+    }
+  });
 
   const replicaMutation = useMutation({
     mutationFn: (value: number) => setReplicas(value),

@@ -22,6 +22,7 @@ export default function RequestsModule() {
 
   const handleSliderChange = (value: number[]) => {
     setRequestsPerSecond(value[0]);
+    console.log("Nouvelle charge définie :", value[0]); // ✅ DEBUG LOG
     mutation.mutate(value[0]);
   };
 
