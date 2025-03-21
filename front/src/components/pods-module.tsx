@@ -3,32 +3,32 @@ import { useState } from "react";
 import { Slider } from "@components/ui/slider";
 import { Checkbox } from "@components/ui/checkbox";
 import { Label } from "@components/ui/label";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { setReplicas, getReplicas, toggleAutoscale } from "@lib/api";
-
+// import { useMutation, useQuery } from "@tanstack/react-query";
+// import { setReplicas, getReplicas, toggleAutoscale } from "@lib/api";
+import PodsView from "@components/pods-view";
 export default function PodsModule() {
   const [autoScale, setAutoScale] = useState(false);
-  const { data: replicas, refetch } = useQuery({
-    queryKey: ["replicas"],
-    queryFn: async () => {
-      const res = await getReplicas();
-      console.log("🛠 Nombre de réplicas reçu :", res); // ✅ DEBUG
-      return res;
-    }
-  });
+  // const { data: replicas, refetch } = useQuery({
+  //   queryKey: ["replicas"],
+  //   queryFn: async () => {
+  //     const res = await getReplicas();
+  //   console.log("🛠 Nombre de réplicas reçu :", res); // ✅ DEBUG
+  //   return res;
+  //   }
+  // });
 
-  const replicaMutation = useMutation({
-    mutationFn: (value: number) => setReplicas(value),
-    onSuccess: () => refetch(),
-  });
+  // const replicaMutation = useMutation({
+  //   mutationFn: (value: number) => setReplicas(value),
+  //   onSuccess: () => refetch(),
+  // });
 
-  const autoscaleMutation = useMutation({
-    mutationFn: (enabled: boolean) => toggleAutoscale(enabled),
-  });
+  // const autoscaleMutation = useMutation({
+  //   mutationFn: (enabled: boolean) => toggleAutoscale(enabled),
+  // });
 
-  const handleSliderChange = (value: number[]) => {
-    replicaMutation.mutate(value[0]);
-  };
+  // const handleSliderChange = (value: number[]) => {
+  //   replicaMutation.mutate(value[0]);
+  // };
 
   return (
     <div className="space-y-6">
@@ -40,7 +40,7 @@ export default function PodsModule() {
             checked={autoScale}
             onCheckedChange={(checked) => {
               setAutoScale(checked === true);
-              autoscaleMutation.mutate(checked === true);
+              // autoscaleMutation.mutate(checked === true);
             }}
           />
           <Label htmlFor="auto-scale" className="text-sm font-medium text-gray-600">
@@ -51,20 +51,21 @@ export default function PodsModule() {
           {!autoScale && (
             <>
               <label htmlFor="replica-slider" className="block text-sm font-medium text-gray-600 mb-2">
-                Nombre de réplicas : {replicas || 3}
+                {/* Nombre de réplicas : {replicas || 3} */}
               </label>
               <Slider
                 id="replica-slider"
                 min={1}
                 max={10}
                 step={1}
-                value={[replicas || 3]}
-                onValueChange={handleSliderChange}
+              // value={[replicas || 3]}
+              // onValueChange={handleSliderChange}
               />
             </>
           )}
         </div>
       </div>
+      <PodsView />
     </div>
   );
 }
