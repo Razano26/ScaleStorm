@@ -96,22 +96,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "api"
-version = "0.1.0"
-dependencies = [
- "axum",
- "env_logger",
- "futures",
- "k8s-openapi",
- "kube",
- "log",
- "rand",
- "regex",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1524,6 +1508,22 @@ name = "ryu"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
+
+[[package]]
+name = "scalestorm-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "env_logger",
+ "futures",
+ "k8s-openapi",
+ "kube",
+ "log",
+ "rand",
+ "regex",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "schannel"
