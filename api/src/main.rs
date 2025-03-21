@@ -2,18 +2,35 @@ mod handlers;
 mod routes;
 mod utils;
 
-use std::net::SocketAddr;
+use kube::Client;
+use log::info;
 use routes::create_router;
+use std::{net::SocketAddr, sync::Arc};
+use axum::serve;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    let app = create_router();
+    env_logger::init();
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    println!("Server running on http://{}", addr);
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    // Create Kubernetes client
+    let client = Client::try_default()
         .await
-        .unwrap();
+        .expect("Failed to create Kubernetes client");
+    let shared_client = Arc::new(client);
+
+    let app = create_router(shared_client);
+
+    // Get port from environment variable or use default
+    let port: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3000);
+
+    // Listen on all interfaces
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    info!("Server running on http://{}", addr);
+
+    let listener = TcpListener::bind(addr).await.unwrap();
+    serve(listener, app).await.unwrap();
 }
