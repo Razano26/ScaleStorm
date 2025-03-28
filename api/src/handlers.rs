@@ -103,10 +103,57 @@ pub async fn get_autoscale(
     let autoscale: Api<HorizontalPodAutoscaler> = Api::namespaced(client.as_ref().clone(), "scalestorm");
 
     match autoscale.get("demo-app").await {
-        Ok(autoscale) => Json(json!(autoscale)),
+        Ok(hpa) => {
+            let spec = hpa.spec.unwrap_or_default();
+            let status = hpa.status.unwrap_or_default();
+
+            // Parse metrics from annotations
+            let metrics_annotation = hpa.metadata.annotations
+                .and_then(|ann| ann.get("autoscaling.alpha.kubernetes.io/metrics").map(|s| s.to_string()))
+                .and_then(|m| serde_json::from_str::<serde_json::Value>(&m).ok())
+                .unwrap_or(json!([]));
+
+            let cpu_target = metrics_annotation.as_array()
+                .and_then(|arr| arr.iter().find(|m| m["resource"]["name"] == "cpu"))
+                .and_then(|m| m["resource"]["target"]["averageUtilization"].as_i64())
+                .unwrap_or(80) as i32;
+
+            let memory_target = metrics_annotation.as_array()
+                .and_then(|arr| arr.iter().find(|m| m["resource"]["name"] == "memory"))
+                .and_then(|m| m["resource"]["target"]["averageUtilization"].as_i64())
+                .unwrap_or(80) as i32;
+
+            Json(json!({
+                "enabled": true,
+                "manualReplicas": status.current_replicas,
+                "minReplicas": spec.min_replicas,
+                "maxReplicas": spec.max_replicas,
+                "cpu": {
+                    "enabled": true,
+                    "target": cpu_target
+                },
+                "memory": {
+                    "enabled": true,
+                    "target": memory_target
+                }
+            }))
+        }
         Err(e) => {
             error!("Failed to get autoscale: {}", e);
-            Json(json!({ "error": "Failed to fetch autoscale" }))
+            Json(json!({
+                "enabled": false,
+                "manualReplicas": 1,
+                "minReplicas": 1,
+                "maxReplicas": 10,
+                "cpu": {
+                    "enabled": false,
+                    "target": 80
+                },
+                "memory": {
+                    "enabled": false,
+                    "target": 80
+                }
+            }))
         }
     }
 }
