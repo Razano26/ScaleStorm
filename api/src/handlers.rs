@@ -113,11 +113,11 @@ pub async fn get_autoscale(
     State(client): State<Arc<Client>>,
 ) -> Json<serde_json::Value> {
     let autoscale: Api<HorizontalPodAutoscaler> = Api::namespaced(client.as_ref().clone(), "scalestorm");
+    let manual_replicas = get_deployment_replicas(client.as_ref(), "scalestorm", "demo-app").await;
 
     match autoscale.get("demo-app").await {
         Ok(hpa) => {
             let spec: k8s_openapi::api::autoscaling::v1::HorizontalPodAutoscalerSpec = hpa.spec.unwrap_or_default();
-            let status = hpa.status.unwrap_or_default();
 
             let mut metrics = json!({});
 
@@ -131,17 +131,16 @@ pub async fn get_autoscale(
 
             Json(json!({
                 "enabled": true,
-                "manualReplicas": status.current_replicas,
+                "manualReplicas": manual_replicas.unwrap_or(1),
                 "minReplicas": spec.min_replicas,
                 "maxReplicas": spec.max_replicas,
                 "metrics": metrics
             }))
         }
         Err(_) => {
-            // error!("Failed to get autoscale: {}", e);
             Json(json!({
                 "enabled": false,
-                "manualReplicas": 1
+                "manualReplicas": manual_replicas.unwrap_or(1)
             }))
         }
     }
@@ -198,37 +197,77 @@ pub async fn update_autoscale(
         }
     }
 
-    // get autoscale from scalestorm namespace, name: demo-app
+    // Update deployment replicas
+    let deployments: Api<Deployment> = Api::namespaced(client.as_ref().clone(), "scalestorm");
+    if let Ok(mut deployment) = deployments.get("demo-app").await {
+        if let Some(spec) = deployment.spec.as_mut() {
+            spec.replicas = Some(manual_replicas.unwrap() as i32);
+            if let Err(e) = deployments.replace("demo-app", &Default::default(), &deployment).await {
+                error!("Failed to update deployment replicas: {}", e);
+                return Json(json!({ "error": "Failed to update deployment replicas" }));
+            }
+        }
+    }
+
     let autoscale_api: Api<HorizontalPodAutoscaler> = Api::namespaced(client.as_ref().clone(), "scalestorm");
+    let autoscale_exists = autoscale_api.get("demo-app").await.is_ok();
     let autoscale = autoscale_api.get("demo-app").await;
 
-    match autoscale {
-        Ok(mut hpa) => {
-            if enabled.unwrap() {
-                // Update HPA spec
-                let mut spec = hpa.spec.unwrap_or_default();
-                spec.min_replicas = Some(body.get("minReplicas").and_then(|v| v.as_i64()).unwrap_or(1) as i32);
-                spec.max_replicas = body.get("maxReplicas").and_then(|v| v.as_i64()).unwrap_or(10) as i32;
-
-                // Update metrics if present
-                if let Some(metrics) = body.get("metrics") {
-                    if let Some(cpu) = metrics.get("cpu") {
-                        if cpu.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false) {
-                            spec.target_cpu_utilization_percentage = cpu.get("target").and_then(|v| v.as_i64()).map(|v| v as i32);
-                        }
-                    }
+    if enabled.unwrap() {
+        // Create or update HPA
+        let mut hpa = match autoscale {
+            Ok(hpa) => hpa,
+            Err(_) => {
+                // Create new HPA if it doesn't exist
+                HorizontalPodAutoscaler {
+                    metadata: k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta {
+                        name: Some("demo-app".to_string()),
+                        namespace: Some("scalestorm".to_string()),
+                        ..Default::default()
+                    },
+                    spec: Some(k8s_openapi::api::autoscaling::v1::HorizontalPodAutoscalerSpec {
+                        scale_target_ref: k8s_openapi::api::autoscaling::v1::CrossVersionObjectReference {
+                            kind: "Deployment".to_string(),
+                            name: "demo-app".to_string(),
+                            api_version: Some("apps/v1".to_string()),
+                        },
+                        min_replicas: Some(body.get("minReplicas").and_then(|v| v.as_i64()).unwrap_or(1) as i32),
+                        max_replicas: body.get("maxReplicas").and_then(|v| v.as_i64()).unwrap_or(10) as i32,
+                        target_cpu_utilization_percentage: body.get("metrics")
+                            .and_then(|m| m.get("cpu"))
+                            .and_then(|c| c.get("enabled"))
+                            .and_then(|e| e.as_bool())
+                            .filter(|&e| e)
+                            .and_then(|_| body.get("metrics")
+                                .and_then(|m| m.get("cpu"))
+                                .and_then(|c| c.get("target"))
+                                .and_then(|t| t.as_i64())
+                                .map(|t| t as i32)),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
                 }
-
-                hpa.spec = Some(spec);
-            } else {
-                // If disabled, set min and max replicas to manual_replicas
-                let mut spec = hpa.spec.unwrap_or_default();
-                spec.min_replicas = Some(manual_replicas.unwrap_or(1) as i32);
-                spec.max_replicas = manual_replicas.unwrap_or(1) as i32;
-                hpa.spec = Some(spec);
             }
+        };
 
-            // Apply the changes
+        // Update HPA spec
+        let mut spec = hpa.spec.unwrap_or_default();
+        spec.min_replicas = Some(body.get("minReplicas").and_then(|v| v.as_i64()).unwrap_or(1) as i32);
+        spec.max_replicas = body.get("maxReplicas").and_then(|v| v.as_i64()).unwrap_or(10) as i32;
+
+        // Update metrics if present
+        if let Some(metrics) = body.get("metrics") {
+            if let Some(cpu) = metrics.get("cpu") {
+                if cpu.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false) {
+                    spec.target_cpu_utilization_percentage = cpu.get("target").and_then(|v| v.as_i64()).map(|v| v as i32);
+                }
+            }
+        }
+
+        hpa.spec = Some(spec);
+        // Apply the changes based on whether HPA exists
+        if autoscale_exists {
+            // If HPA exists, use replace
             match autoscale_api.replace("demo-app", &Default::default(), &hpa).await {
                 Ok(_) => Json(json!({ "status": "ok" })),
                 Err(e) => {
@@ -236,10 +275,29 @@ pub async fn update_autoscale(
                     Json(json!({ "error": "Failed to update autoscale" }))
                 }
             }
+        } else {
+            // If HPA doesn't exist, use create
+            match autoscale_api.create(&Default::default(), &hpa).await {
+                Ok(_) => Json(json!({ "status": "ok" })),
+                Err(e) => {
+                    error!("Failed to create autoscale: {}", e);
+                    Json(json!({ "error": "Failed to create autoscale" }))
+                }
+            }
         }
-        Err(e) => {
-            error!("Failed to get autoscale: {}", e);
-            Json(json!({ "error": "Failed to get autoscale" }))
+    } else {
+        // Delete HPA if it exists
+        match autoscale {
+            Ok(_) => {
+                match autoscale_api.delete("demo-app", &Default::default()).await {
+                    Ok(_) => Json(json!({ "status": "ok" })),
+                    Err(e) => {
+                        error!("Failed to delete autoscale: {}", e);
+                        Json(json!({ "error": "Failed to delete autoscale" }))
+                    }
+                }
+            }
+            Err(_) => Json(json!({ "status": "ok" })), // HPA doesn't exist, which is fine
         }
     }
 }
