@@ -6,11 +6,23 @@ use axum::{
 use futures::future::join_all;
 use k8s_openapi::api::core::v1::Pod;
 use k8s_openapi::api::autoscaling::v1::HorizontalPodAutoscaler;
+use k8s_openapi::api::apps::v1::Deployment;
 use kube::Client;
 use kube::api::{Api, ListParams};
 use log::error;
 use serde_json::json;
 use std::sync::Arc;
+
+async fn get_deployment_replicas(client: &Client, namespace: &str, name: &str) -> Option<i32> {
+    let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
+    match deployments.get(name).await {
+        Ok(deployment) => deployment.spec.and_then(|spec| spec.replicas),
+        Err(e) => {
+            error!("Failed to get deployment {}/{}: {}", namespace, name, e);
+            None
+        }
+    }
+}
 
 pub async fn list_pods_all_namespaces(State(client): State<Arc<Client>>) -> Json<serde_json::Value> {
     let pods: Api<Pod> = Api::all(client.as_ref().clone());
