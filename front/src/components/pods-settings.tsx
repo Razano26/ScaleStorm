@@ -9,14 +9,22 @@ import { Input } from "@components/ui/input"
 import { Badge } from "@components/ui/badge"
 import { Separator } from "@components/ui/separator"
 import { InfoIcon } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
-import { getAutoscale } from "../lib/api"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { getAutoscale, setAutoscale } from "../lib/api"
 import { AutoscaleConfig } from "../types/autoscale"
 
 export default function PodsSettings() {
+  const queryClient = useQueryClient()
   const { data: autoscaleConfig, isLoading } = useQuery<AutoscaleConfig>({
     queryKey: ["autoscale"],
     queryFn: getAutoscale,
+  })
+
+  const autoscaleMutation = useMutation({
+    mutationFn: setAutoscale,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["autoscale"] })
+    },
   })
 
   const [autoScale, setAutoScale] = useState(false)
@@ -49,6 +57,21 @@ export default function PodsSettings() {
     }
   }, [autoscaleConfig])
 
+  const updateConfig = (updates: Partial<AutoscaleConfig>) => {
+    const newConfig: AutoscaleConfig = {
+      enabled: autoScale,
+      manualReplicas,
+      minReplicas,
+      maxReplicas,
+      metrics: {
+        cpu: cpuEnabled ? { enabled: true, target: cpuTarget } : undefined,
+        memory: memoryEnabled ? { enabled: true, target: memoryTarget } : undefined,
+      },
+      ...updates,
+    }
+    autoscaleMutation.mutate(newConfig)
+  }
+
   if (isLoading) {
     return <div>Loading...</div>
   }
@@ -77,7 +100,7 @@ export default function PodsSettings() {
               checked={autoScale}
               onCheckedChange={(checked) => {
                 setAutoScale(checked === true)
-                // autoscaleMutation.mutate(checked === true);
+                updateConfig({ enabled: checked === true })
               }}
             />
             <Label htmlFor="auto-scale" className="font-medium cursor-pointer">
@@ -114,6 +137,7 @@ export default function PodsSettings() {
                           if (value[0] > maxReplicas) {
                             setMaxReplicas(value[0])
                           }
+                          updateConfig({ minReplicas: value[0] })
                         }}
                       />
                     </div>
@@ -131,7 +155,10 @@ export default function PodsSettings() {
                         max={30}
                         step={1}
                         value={[maxReplicas]}
-                        onValueChange={(value) => setMaxReplicas(value[0])}
+                        onValueChange={(value) => {
+                          setMaxReplicas(value[0])
+                          updateConfig({ maxReplicas: value[0] })
+                        }}
                       />
                     </div>
                   </div>
@@ -146,7 +173,15 @@ export default function PodsSettings() {
                         <Checkbox
                           id="cpu-enabled"
                           checked={cpuEnabled}
-                          onCheckedChange={(checked) => setCpuEnabled(checked === true)}
+                          onCheckedChange={(checked) => {
+                            setCpuEnabled(checked === true)
+                            updateConfig({
+                              metrics: {
+                                cpu: checked === true ? { enabled: true, target: cpuTarget } : undefined,
+                                memory: memoryEnabled ? { enabled: true, target: memoryTarget } : undefined,
+                              },
+                            })
+                          }}
                         />
                         <Label htmlFor="cpu-enabled" className="text-sm">
                           Enable CPU Scaling
@@ -166,7 +201,15 @@ export default function PodsSettings() {
                             max={100}
                             step={1}
                             value={[cpuTarget]}
-                            onValueChange={(value) => setCpuTarget(value[0])}
+                            onValueChange={(value) => {
+                              setCpuTarget(value[0])
+                              updateConfig({
+                                metrics: {
+                                  cpu: { enabled: true, target: value[0] },
+                                  memory: memoryEnabled ? { enabled: true, target: memoryTarget } : undefined,
+                                },
+                              })
+                            }}
                           />
                         </div>
                       )}
@@ -177,7 +220,15 @@ export default function PodsSettings() {
                         <Checkbox
                           id="memory-enabled"
                           checked={memoryEnabled}
-                          onCheckedChange={(checked) => setMemoryEnabled(checked === true)}
+                          onCheckedChange={(checked) => {
+                            setMemoryEnabled(checked === true)
+                            updateConfig({
+                              metrics: {
+                                cpu: cpuEnabled ? { enabled: true, target: cpuTarget } : undefined,
+                                memory: checked === true ? { enabled: true, target: memoryTarget } : undefined,
+                              },
+                            })
+                          }}
                         />
                         <Label htmlFor="memory-enabled" className="text-sm">
                           Enable Memory Scaling
@@ -197,7 +248,15 @@ export default function PodsSettings() {
                             max={100}
                             step={1}
                             value={[memoryTarget]}
-                            onValueChange={(value) => setMemoryTarget(value[0])}
+                            onValueChange={(value) => {
+                              setMemoryTarget(value[0])
+                              updateConfig({
+                                metrics: {
+                                  cpu: cpuEnabled ? { enabled: true, target: cpuTarget } : undefined,
+                                  memory: { enabled: true, target: value[0] },
+                                },
+                              })
+                            }}
                           />
                         </div>
                       )}
@@ -228,7 +287,11 @@ export default function PodsSettings() {
                   min={1}
                   max={30}
                   value={manualReplicas}
-                  onChange={(e) => setManualReplicas(Number.parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const value = Number.parseInt(e.target.value) || 1
+                    setManualReplicas(value)
+                    updateConfig({ manualReplicas: value })
+                  }}
                   className="w-24"
                 />
               </div>

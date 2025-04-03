@@ -17,3 +17,11 @@ export const getAutoscale = async () => {
   const { data } = await axios.get<AutoscaleConfig>(`${API_URL}/autoscale`);
   return data as AutoscaleConfig;
 };
+
+export const setAutoscale = async (config: AutoscaleConfig) => {
+  const { data } = await axios.put<AutoscaleConfig>(
+    `${API_URL}/autoscale`,
+    config,
+  );
+  return data as AutoscaleConfig;
+};
