@@ -19,11 +19,16 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'docker.io/razano26/scalestrom-api:${{ github.sha }}'
-          format: 'table'
+          format: 'sarif'
+          output: 'trivy-report.sarif'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-report.sarif'
 
   scan-docker-front:
     name: Scan Docker Image of Scalestrom Frontend
@@ -42,8 +47,13 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'docker.io/razano26/scalestrom-front:${{ github.sha }}'
-          format: 'table'
+          format: 'sarif'
+          output: 'trivy-report.sarif'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-report.sarif'
