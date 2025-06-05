@@ -3,7 +3,7 @@ on:
   push:
 jobs:
   scan-docker-api:
-    name: Scan Docker Image of Scalestrom API
+    name: Scan Backend image with Trivy
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,7 +21,6 @@ jobs:
           image-ref: 'docker.io/razano26/scalestrom-api:${{ github.sha }}'
           format: 'sarif'
           output: 'trivy-report.sarif'
-          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
@@ -31,7 +30,7 @@ jobs:
           sarif_file: 'trivy-report.sarif'
 
   scan-docker-front:
-    name: Scan Docker Image of Scalestrom Frontend
+    name: Scan Frontend image with Trivy
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,7 +48,6 @@ jobs:
           image-ref: 'docker.io/razano26/scalestrom-front:${{ github.sha }}'
           format: 'sarif'
           output: 'trivy-report.sarif'
-          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'

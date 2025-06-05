@@ -1,4 +1,4 @@
-name: gitleaks
+name: Scan Gitleaks
 on:
   push:
 jobs:

@@ -1,10 +1,10 @@
-name: pnpm Example Workflow
+name: Scan SCA with Snyk
 on:
   push:
 
 jobs:
   scan-sca-snyk-front:
-    name: Scan SCA Snyk
+    name: Scan Frontend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,7 +38,7 @@ jobs:
         run: snyk code test --json
 
   scan-sca-snyk-api:
-    name: Scan SCA Snyk
+    name: Scan Backend
     runs-on: ubuntu-latest
     defaults:
       run:
