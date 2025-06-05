@@ -1,0 +1,75 @@
+name: Security Scan
+
+on:
+  push:
+
+jobs:
+  rust-security:
+    name: Rust SAST + SCA
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Cargo Audit (SCA)
+        run: |
+          cargo install --locked cargo-audit
+          cargo audit
+
+      - name: Cargo Geiger (SAST unsafe code)
+        continue-on-error: true
+        run: |
+          cargo install --locked cargo-geiger
+          cargo geiger
+
+      - name: Semgrep (Rust rules)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+            p/rust
+
+  nodejs-security:
+    name: Frontend SAST + SCA
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm ci
+
+      - name: pnpm audit (SCA)
+        run: pnpm audit --audit-level=high
+
+      - name: ESLint Security Rules
+        run: pnpm eslint . --ext .js,.jsx,.ts,.tsx || true
+
+      - name: Semgrep (JS / React rules)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/javascript
+            p/react

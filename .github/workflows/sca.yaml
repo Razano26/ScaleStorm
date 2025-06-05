@@ -1,0 +1,65 @@
+name: pnpm Example Workflow
+on:
+  push:
+
+jobs:
+  scan-sca-snyk-front:
+    name: Scan SCA Snyk
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Snyk
+        run: npm install -g snyk
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Scan library with Snyk
+        run: snyk test --json
+
+      - name: Scan code with Snyk
+        run: snyk code test --json
+
+  scan-sca-snyk-api:
+    name: Scan SCA Snyk
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Snyk
+        run: npm install -g snyk
+
+      - name: Install dependencies
+        run: cargo build
+
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Scan code with Snyk
+        run: snyk code test --json
