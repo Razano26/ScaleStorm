@@ -1,0 +1,23 @@
+[
+	{
+		"RuleID": "generic-api-key",
+		"Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+		"StartLine": 5,
+		"EndLine": 5,
+		"StartColumn": 84,
+		"EndColumn": 101,
+		"Match": "token=abc123def456",
+		"Secret": "abc123def456",
+		"File": "backend/README.md",
+		"SymlinkFile": "",
+		"Commit": "03d08d1a9506e527d8a35e5d5649b2f14d770a00",
+		"Link": "https://github.com/Razano26/ScaleStorm/blob/03d08d1a9506e527d8a35e5d5649b2f14d770a00/backend/README.md?plain=1#L5",
+		"Entropy": 3.5849626,
+		"Author": "Louis Labeyrie",
+		"Email": "labeyrielouis@gmail.com",
+		"Date": "2025-02-08T00:42:05Z",
+		"Message": "add backend module and services; configure frontend with query client and API integration\n\nSigned-off-by: Louis Labeyrie \u003clabeyrielouis@gmail.com\u003e",
+		"Tags": [],
+		"Fingerprint": "03d08d1a9506e527d8a35e5d5649b2f14d770a00:backend/README.md:generic-api-key:5"
+	}
+]

@@ -1,0 +1,111 @@
+{
+	"database": {
+		"advisory-count": 785,
+		"last-commit": "a1f651cba8bf224f52c5d55d8182b3bb0ebce49e",
+		"last-updated": "2025-06-03T13:30:36+02:00"
+	},
+	"lockfile": { "dependency-count": 227 },
+	"settings": {
+		"target_arch": [],
+		"target_os": [],
+		"severity": null,
+		"ignore": [],
+		"informational_warnings": ["unmaintained", "unsound", "notice"]
+	},
+	"vulnerabilities": { "found": false, "count": 0, "list": [] },
+	"warnings": {
+		"unsound": [
+			{
+				"kind": "unsound",
+				"package": {
+					"name": "tokio",
+					"version": "1.44.1",
+					"source": "registry+https://github.com/rust-lang/crates.io-index",
+					"checksum": "f382da615b842244d4b8738c82ed1275e6c5dd90c459a30941cd07080b06c91a",
+					"dependencies": [
+						{
+							"name": "backtrace",
+							"version": "0.3.74",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "bytes",
+							"version": "1.10.1",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "libc",
+							"version": "0.2.171",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "mio",
+							"version": "1.0.3",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "parking_lot",
+							"version": "0.12.3",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "pin-project-lite",
+							"version": "0.2.16",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "signal-hook-registry",
+							"version": "1.4.2",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "socket2",
+							"version": "0.5.8",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "tokio-macros",
+							"version": "2.5.0",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						},
+						{
+							"name": "windows-sys",
+							"version": "0.52.0",
+							"source": "registry+https://github.com/rust-lang/crates.io-index"
+						}
+					],
+					"replace": null
+				},
+				"advisory": {
+					"id": "RUSTSEC-2025-0023",
+					"package": "tokio",
+					"title": "Broadcast channel calls clone in parallel, but does not require `Sync`",
+					"description": "The broadcast channel internally calls `clone` on the stored value when\nreceiving it, and only requires `T:Send`. This means that using the broadcast\nchannel with values that are `Send` but not `Sync` can trigger unsoundness if\nthe `clone` implementation makes use of the value being `!Sync`.\n\nThank you to Austin Bonander for finding and reporting this issue.",
+					"date": "2025-04-07",
+					"aliases": [],
+					"related": [],
+					"collection": "crates",
+					"categories": ["memory-corruption"],
+					"keywords": [],
+					"cvss": null,
+					"informational": "unsound",
+					"references": [],
+					"source": null,
+					"url": "https://github.com/tokio-rs/tokio/pull/7232",
+					"withdrawn": null,
+					"license": "CC0-1.0"
+				},
+				"affected": null,
+				"versions": {
+					"patched": [
+						">=1.38.2, <1.39.0",
+						">=1.42.1, <1.43.0",
+						">=1.43.1, <1.44.0",
+						">=1.44.2"
+					],
+					"unaffected": ["<0.2.5"]
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,119 @@
+{
+	"$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+	"version": "2.1.0",
+	"runs": [
+		{
+			"tool": {
+				"driver": {
+					"name": "SnykCode",
+					"semanticVersion": "1.0.0",
+					"version": "1.0.0",
+					"rules": [
+						{
+							"id": "rust/TooPermissiveCors",
+							"name": "TooPermissiveCors",
+							"shortDescription": {
+								"text": "Origin Validation Error"
+							},
+							"defaultConfiguration": {
+								"level": "warning"
+							},
+							"help": {
+								"markdown": "\n## Details\n\nAs a legacy of early web design and site limitations, most web applications default, for security reasons, to a \"same origin policy\". This means that browsers can only retrieve data from another site if the two sites share the same domain. In today's complex online environment, however, sites and applications often need to retrieve data from other domains. This is done under fairly limited conditions through an exception to the same origin policy known as \"cross-origin resource sharing\".\n\nDevelopers may create definitions of trusted domains that are broader than absolutely necessary, inadvertently opening up wider access than intended. This weakness could result in data exposure or loss, or even allow an attacker to take over the site or application.\n\n## Best practices for prevention\n* Avoid using wildcards for cross-origin resource sharing. Instead, define intended domains explicitly.\n* Ensure that your site or app is well defended against cross-site scripting attacks (XSS), which could lead to takeover via an overly permissive cross-domain policy.\n* Do not mix secure and insecure protocols when defining cross-domain policies.\n* Consider defining a clear approved list to specify which domains will be given resource-level access; use this approved list to validate all domain access requests.\n* Clearly define which methods (view, read, and update) are permitted for each resource and domain to avoid abuse.",
+								"text": ""
+							},
+							"properties": {
+								"tags": ["rust", "TooPermissiveCors", "Security"],
+								"categories": ["Security"],
+								"exampleCommitFixes": [],
+								"exampleCommitDescriptions": [],
+								"precision": "very-high",
+								"repoDatasetSize": 0,
+								"cwe": ["CWE-942", "CWE-346"]
+							}
+						}
+					]
+				}
+			},
+			"results": [
+				{
+					"ruleId": "rust/TooPermissiveCors",
+					"ruleIndex": 0,
+					"level": "warning",
+					"message": {
+						"text": "CORS policy might be too permissive. This allows malicious code on other domains to communicate with the application, which is a security risk",
+						"markdown": "{0} might be too permissive. This allows malicious code on other domains to communicate with the application, which is a security risk",
+						"arguments": ["[CORS policy](0)"]
+					},
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "src/routes.rs",
+									"uriBaseId": "%SRCROOT%"
+								},
+								"region": {
+									"startLine": 9,
+									"endLine": 9,
+									"startColumn": 23,
+									"endColumn": 26
+								}
+							}
+						}
+					],
+					"fingerprints": {
+						"0": "04f10e8357cd496121ff56b283687f9626c4be2a8aa47f262b6122683e9de1c6",
+						"1": "836e177f.6f14f2b4.8a481123.638e163d.3a6ec849.2f4e1548.df7e59ba.f3c16c39.b6ad9597.6f14f2b4.45df3e14.638e163d.cf2b3477.5784395d.3d752d4d.c35e92ac"
+					},
+					"codeFlows": [
+						{
+							"threadFlows": [
+								{
+									"locations": [
+										{
+											"location": {
+												"id": 0,
+												"physicalLocation": {
+													"artifactLocation": {
+														"uri": "src/routes.rs",
+														"uriBaseId": "%SRCROOT%"
+													},
+													"region": {
+														"startLine": 9,
+														"endLine": 9,
+														"startColumn": 23,
+														"endColumn": 26
+													}
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					],
+					"properties": {
+						"priorityScore": 400,
+						"priorityScoreFactors": [
+							{
+								"label": true,
+								"type": "hotFileCodeFlow"
+							}
+						],
+						"isAutofixable": false
+					}
+				}
+			],
+			"properties": {
+				"coverage": [
+					{
+						"isSupported": true,
+						"lang": "Rust (beta)",
+						"files": 5,
+						"type": "SUPPORTED"
+					}
+				]
+			}
+		}
+	]
+}
