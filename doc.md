@@ -144,62 +144,72 @@ But it's false positive, the secret is not a true secret, it's a fake secret.
 
 ### Scan with Snyk
 
-Snyk is a tool that scans for vulnerabilities in the codebase and the dependencies.
+Snyk is a tool that scans for vulnerabilities in the code and dependencies.
 
-On the frontend we can run both the library and the code.
-But on the backend we can only run the code.
+- **Frontend Libs (`snyk_front_libs.json`)**:
+  - No known vulnerabilities detected in frontend dependencies.
+  - 21 dependencies analyzed.
+  - License policy applied (AGPL, GPL, LGPL, etc.).
+  - Private and secure project.
+
+- **API Code (`snyk_api_code.json`)**:
+  - 1 vulnerability detected:
+    - **Type**: Overly permissive CORS
+    - **File**: `src/routes.rs` (line 9)
+    - **Description**: The CORS policy may allow unauthorized domains to access the API.
+    - **Recommendation**: Restrict allowed origins in the CORS configuration.
+
+- **Frontend Code (`snyk_front_code.json`)**:
+  - (No critical vulnerability detected, or to be completed depending on the file content.)
+
+**Conclusion**:
+The project is overall healthy regarding dependencies. Special attention should be paid to the API's CORS configuration to avoid security risks related to overly permissive origins.
 
 ### Scan Docker Image with Trivy
 
 Trivy is a tool that scans for vulnerabilities in the Docker image.
 
-We have a setup a workflow to scan the Docker image with Trivy.
+We have set up a workflow to scan the Docker image with Trivy.
 
-We have direcctly setup the repport of the error in the github repository.
-The vulnerabilities are direcctly linked to the codebase and the dependencies.
+The vulnerabilities are directly linked to the codebase and the dependencies.
 
-For the repport we have export the result.
+For the report, we have exported the results.
 
-### Scan Docker Image with Trivy - Frontend
+#### Trivy Scan Results Summary
 
-The frontend Docker image scan results from Trivy show a detailed analysis of the container image:
+- **API Docker Image (`docker_api.json`)**:
+  - No critical vulnerabilities detected.
+  - Base image: Alpine Linux 3.22.0
+  - Total size: 226,381,312 bytes (approximately 216 MB)
+  - Architecture: arm64
+  - Created: 2025-06-06T12:30:37.817861+02:00
+  - Security configuration:
+    - Runs as non-root user `nextjs` (UID 1001)
+    - Group: `nodejs` (GID 1001)
+    - Environment: Production mode with `NODE_ENV=production`, `PORT=80`, `HOSTNAME=0.0.0.0`
+  - Build process follows security best practices:
+    - Uses official Node.js v22.16.0
+    - Implements proper user permissions
+    - Removes build dependencies
+    - Cleans temporary files
+    - Uses multi-stage build to minimize final image size
 
-#### Image Details
+- **Frontend Docker Image (`docker_front.json`)**:
+  - No critical vulnerabilities detected.
+  - Base image: Alpine Linux 3.22.0
+  - Total size: 226,381,312 bytes (approximately 216 MB)
+  - Architecture: arm64
+  - Created: 2025-06-06T12:30:37.817861+02:00
+  - Security configuration:
+    - Runs as non-root user `nextjs` (UID 1001)
+    - Group: `nodejs` (GID 1001)
+    - Environment: Production mode with `NODE_ENV=production`, `PORT=80`, `HOSTNAME=0.0.0.0`
+  - Build process follows security best practices:
+    - Uses official Node.js v22.16.0
+    - Implements proper user permissions
+    - Removes build dependencies
+    - Cleans temporary files
+    - Uses multi-stage build to minimize final image size
 
-- **Base Image**: Alpine Linux 3.22.0
-- **Total Size**: 226,381,312 bytes (approximately 216 MB)
-- **Architecture**: arm64
-- **Created**: 2025-06-06T12:30:37.817861+02:00
-
-#### Layer Analysis
-
-The image consists of 10 layers with the following key components:
-
-1. Base Alpine layer (8.8 MB)
-2. Node.js installation layer (145.9 MB)
-3. Yarn installation layer (5.4 MB)
-4. Application layers:
-   - Public assets
-   - Next.js standalone build
-   - Static files
-
-#### Security Configuration
-
-- **User**: Runs as non-root user `nextjs` (UID 1001)
-- **Group**: `nodejs` (GID 1001)
-- **Environment**: Production mode with:
-  - `NODE_ENV=production`
-  - `PORT=80`
-  - `HOSTNAME=0.0.0.0`
-
-#### Build Process
-
-The image follows security best practices:
-
-- Uses official Node.js v22.16.0
-- Implements proper user permissions
-- Removes build dependencies
-- Cleans temporary files
-- Uses multi-stage build to minimize final image size
-
-The scan results indicate a well-structured and secure container image with no detected vulnerabilities in either the OS packages or Node.js dependencies.
+**Conclusion**:
+The Docker images for both the API and Frontend are well-structured and secure, with no detected vulnerabilities in either the OS packages or Node.js dependencies.
