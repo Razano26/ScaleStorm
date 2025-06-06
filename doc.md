@@ -130,7 +130,8 @@ We have test the following packages:
 - **cargo-geiger**: to check for unsafe code in the codebase.
 
 The result from geiger is not very good, it's due to the fact that the scan scan dependencies and sub-dependencies but it's not our job to fix them.
-About the cargo-audit, we
+About the cargo-audit, the main threat is about the tokio crate, it's a crate that is used to make the application asynchronous.
+To fix this we have to update the tokio crate to a newer version. We have done this in the `Cargo.toml` file and now the scan is clean.
 
 ### Scan Gitleaks
 
